@@ -1,9 +1,10 @@
 //2022114815 마현호
 #include<stdio.h>
-#define MAX_COL 100
+#include<stdlib.h>
+#define MAX_COL 1000
 #pragma warning (disable:4996)
 
-typedef struct {
+typedef struct {//행, 열, 값을 저장할 구조체
 	int col;
 	int row;
 	int value;
@@ -37,52 +38,70 @@ void readfile(const char* filename, term* a) {//sparse 파일을 읽는 함수
 	a[0].value = value;//마지막 0이 아닌값의 총 갯수를 저장
 }
 
-void printarray(term *a) {//1차원 배열 term을 출력하는 함수
+void printarray(term* a) {//term 구조체 출력 함수
 	printf("ROW  COL  VAL\n");
-	for (int i = 0; i <= a[0].value; i++) {//a배열에 있는 값에 대한 정보
+	for (int i = 0; i <= a[0].value; i++) {
 		printf(" %2d  %2d  %2d\n", a[i].row, a[i].col, a[i].value);
 	}
 	printf("\n");
-	int count = 1;
+
+	// 2차원 형태 출력
 	for (int i = 0; i < a[0].row; i++) {
 		for (int j = 0; j < a[0].col; j++) {
-			if (count <= a[0].value&& a[count].row == i && a[count].col == j) {
-				printf(" *");//배열의 각 row,col에 저장된 값과 i,j를 비교하여 일치하면 *출력
-				count++;
+			int found = 0;
+			for (int k = 1; k <= a[0].value; k++) {
+				if (a[k].row == i && a[k].col == j) {
+					found = 1;
+					break;
+				}
 			}
-			else
-				printf("  ");//아니면 공백출력
-			
+			if (found) {
+				printf(" *");
+			}
+			else {
+				printf("  ");
+			}
 		}
 		printf("\n");
 	}
 }
 
-void rotate90matrix(term a[], term b[]) {
+
+void rotate90matrix(term a[], term b[]) {//90도 회전 함수
 	int numRows = a[0].row;
 	int numCols = a[0].col;
 	int numTerms = a[0].value;
-	//90도 회전이므로 행과 열의 값이 바뀜
-	b[0].row = numCols; 
+
+	b[0].row = numCols; //b의 0번 인덱스에 행, 열, 값 전달
 	b[0].col = numRows;
 	b[0].value = numTerms;
 
-	for (int i = 1; i <= numTerms; i++) {
-		b[i].row = a[i].col;
-		b[i].col = numRows - 1 - a[i].row;
-		b[i].value = a[i].value;
-	}//90도 회전한 행과열,value값을 바뀐 b에 전달
+	int count[MAX_COL] = { 0 };
+	int startPos[MAX_COL] = { 0 };
 
-	for (int i = 1; i <= numTerms - 1; i++) {//회전된 행렬을 정렬 행우선 정렬 행이 같을시 열기준 정렬
-		for (int j = i + 1; j <= numTerms; j++) {
-			if (b[i].row > b[j].row || (b[i].row == b[j].row && b[i].col > b[j].col)) {
-				term temp = b[i];
-				b[i] = b[j];
-				b[j] = temp;//두 항을 교환
-			}
-		}
+	// 각 열에 해당하는 항 개수 세기
+	for (int i = 1; i <= numTerms; i++) {
+		count[a[i].col]++;
 	}
+
+	// 시작 위치 계산
+	startPos[0] = 1;
+	for (int i = 1; i < numCols; i++) {
+		startPos[i] = startPos[i - 1] + count[i - 1];
+	}
+
+	// 회전된 위치에 삽입
+	for (int i = 1; i <= numTerms; i++) {
+		int col = a[i].col;
+		int pos = startPos[col]++;
+		b[pos].row = col;
+		b[pos].col = numRows - 1 - a[i].row;
+		b[pos].value = a[i].value;
+	}
+	
 }
+
+
 
 
 int main() {
